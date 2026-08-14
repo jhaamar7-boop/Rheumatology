@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jhajis RheumEMR - Workstation & Scoring System</title>
+    <style>
+        :root {
+            --primary: #009688;
+            --primary-dark: #00796b;
+            --primary-light: #e0f2f1;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+            --red: #ef4444;
+            --red-light: #fee2e2;
+            --yellow: #f59e0b;
+            --yellow-light: #fef3c7;
+            --green: #10b981;
+            --green-light: #d1fae5;
+            --radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-dark); display: flex; flex-direction: column; min-height: 100vh; }
+
+        header { background-color: var(--bg-card); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.1rem; color: #00897b; }
+        .logo svg { flex-shrink: 0; }
+        .nav-links { display: flex; gap: 8px; }
+        .nav-btn { background: none; border: none; padding: 8px 16px; border-radius: var(--radius); font-weight: 500; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .nav-btn:hover, .nav-btn.active { background-color: var(--primary-light); color: var(--primary-dark); }
+
+        main { flex-grow: 1; padding: 24px; max-width: 1400px; width: 100%; margin: 0 auto; }
+
+        .card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .card-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: var(--text-dark); }
+
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        .stat-card { display: flex; align-items: center; gap: 16px; }
+        .stat-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--primary-light); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: bold; }
+        .stat-val { font-size: 1.5rem; font-weight: 700; }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); }
+
+        .btn { padding: 8px 16px; border-radius: var(--radius); border: none; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; font-size: 0.9rem; }
+        .btn-primary { background: var(--primary-dark); color: white; }
+        .btn-primary:hover { background: #004d40; }
+        .btn-secondary { background: #f1f5f9; color: var(--text-dark); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #e2e8f0; }
+
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; font-weight: 600; color: var(--text-muted); }
+        tr:hover { background: #f8fafc; }
+
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+        .badge-teal { background: var(--primary-light); color: var(--primary-dark); }
+        .badge-red { background: var(--red-light); color: var(--red); }
+        .badge-yellow { background: var(--yellow-light); color: var(--yellow); }
+        .badge-green { background: var(--green-light); color: var(--green); }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px; color: var(--text-dark); }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 12px; border-radius: var(--radius); border: 1px solid var(--border); outline: none; font-size: 0.9rem; }
+
+        .joint-container { display: flex; flex-direction: column; align-items: center; gap: 12px; background: #fafafa; padding: 16px; border-radius: var(--radius); border: 1px solid var(--border); }
+        .joint-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
+        .joint-btn { padding: 8px 4px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; background: white; cursor: pointer; text-align: center; }
+        .joint-btn.tender { background: var(--yellow-light); border-color: var(--yellow); color: #92400e; font-weight: bold; }
+        .joint-btn.swollen { background: var(--red-light); border-color: var(--red); color: #991b1b; font-weight: bold; }
+        .joint-btn.both { background: #fbcfe8; border-color: #db2777; color: #831843; font-weight: bold; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: var(--radius); width: 100%; max-width: 600px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
+
+        .score-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .score-box { background: var(--bg-main); padding: 10px; border-radius: var(--radius); text-align: center; border: 1px solid var(--border); }
+        .score-val { font-size: 1.4rem; font-weight: 700; color: var(--primary-dark); }
+        .score-lbl { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+
+        .sledai-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem; }
+        .sledai-item { display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border); }
+
+        /* PRINT STYLES - PROPORTIONAL LETTERHEAD */
+        #printable-prescription { display: none; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printable-prescription, #printable-prescription * { visibility: visible; }
+            #printable-prescription {
+                display: flex !important;
+                flex-direction: column;
+                justify-content: space-between;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                min-height: 98vh;
+                padding: 25px 35px;
+                background: #fffdf5; 
+                color: #004d40;
+                box-sizing: border-box;
+                font-family: Georgia, "Times New Roman", Times, serif;
+            }
+
+            .rx-header-box {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 20px;
+                border-bottom: 2px solid #004d40;
+                padding-bottom: 12px;
+                margin-bottom: 8px;
+            }
+
+            .rx-header-logo {
+                width: 110px;
+                height: 110px;
+                flex-shrink: 0;
+            }
+
+            .rx-title-main {
+                font-family: "Times New Roman", Georgia, serif;
+                font-size: 1.7rem;
+                font-weight: bold;
+                font-style: italic;
+                color: #004d40;
+                text-align: center;
+                flex-grow: 1;
+                letter-spacing: 0.5px;
+                line-height: 1.25;
+            }
+
+            .rx-doctor-tag {
+                text-align: center;
+                font-size: 0.95rem;
+                font-weight: bold;
+                margin-top: 6px;
+                color: #004d40;
+                letter-spacing: 0.5px;
+            }
+
+            .rx-patient-bar {
+                display: flex;
+                justify-content: space-between;
+                border-top: 1px solid #004d40;
+                border-bottom: 1px solid #004d40;
+                padding: 8px 4px;
+                margin-top: 8px;
+                margin-bottom: 18px;
+                font-size: 1.05rem;
+                font-style: italic;
+            }
+
+            .rx-line-val { font-style: normal; font-weight: bold; border-bottom: 1px solid #004d40; padding: 0 8px; }
+
+            .rx-body { flex-grow: 1; margin-top: 10px; }
+            .rx-symbol-big { font-size: 2.2rem; font-weight: bold; font-family: Georgia, serif; margin-bottom: 12px; }
+
+            .rx-table-print { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            .rx-table-print th, .rx-table-print td { text-align: left; padding: 10px 6px; border-bottom: 1px solid #e2e8f0; font-family: Arial, sans-serif; font-size: 0.95rem; }
+            .rx-table-print th { border-bottom: 2px solid #004d40; font-family: Georgia, serif; font-size: 0.95rem; }
+
+            .rx-footer-box {
+                border-top: 1px solid #004d40;
+                padding-top: 10px;
+                text-align: center;
+                font-size: 0.95rem;
+                line-height: 1.4;
+                color: #004d40;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="no-print">
+        <div class="logo">
+            <!-- Shield + Medical Cross + Joint SVG Logo -->
+            <svg width="46" height="46" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Shield Base -->
+                <path d="M 28,30 C 42,27 48,22 50,18 C 52,22 58,27 72,30 C 73,50 71,68 59,80 C 53,85 51,87 50,88 C 49,87 47,85 41,80 C 29,68 27,50 28,30 Z" fill="#009688"/>
+                <!-- Medical Cross -->
+                <path d="M 39,36 H 43 V 32 H 47 V 36 H 51 V 40 H 47 V 44 H 43 V 40 H 39 Z" fill="#FFFFFF"/>
+                <!-- Joint / Leg Silhouette -->
+                <path d="M 45,15 C 47,28 47,38 52,43 C 55,46 58,45 58,51 C 58,56 53,58 51,62 C 49,66 50,78 52,85 C 49,78 47,68 48,62 C 49,58 53,56 53,51 C 53,47 50,47 47,42 C 43,36 43,26 43,15 Z" fill="#FFFFFF"/>
+                <path d="M 51,62 C 53,65 52,78 58,85 C 56,78 54,66 52,62 Z" fill="#00796b"/>
+            </svg>
+            JHAJI'S RHEUMATOLOGY OPD
+        </div>
+        <div class="nav-links">
+            <button class="nav-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            <button class="nav-btn" onclick="switchTab('patients')">👥 Patients</button>
+        </div>
+    </header>
+
+    <main id="app-container" class="no-print">
+        <!-- Dynamic Application Content -->
+    </main>
+
+    <!-- Hidden Printable Prescription Area -->
+    <div id="printable-prescription"></div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 1.1rem;">Register New Patient</h3>
+                <button onclick="closeRegisterModal()" style="background: none; border: none; font-size: 1.4rem; cursor: pointer;">&times;</button>
+            </div>
+            <form id="reg-form" onsubmit="handleRegisterPatient(event)">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="reg-name" required placeholder="e.g. Ramesh Kumar">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label>Age *</label>
+                        <input type="number" id="reg-age" required placeholder="42">
+                    </div>
+                    <div class="form-group">
+                        <label>Sex *</label>
+                        <select id="reg-gender" required>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Primary Diagnosis *</label>
+                    <select id="reg-diagnosis" required>
+                        <option value="Rheumatoid Arthritis">Rheumatoid Arthritis</option>
+                        <option value="Systemic Lupus Erythematosus">Systemic Lupus Erythematosus</option>
+                        <option value="Ankylosing Spondylitis">Ankylosing Spondylitis</option>
+                        <option value="Psoriatic Arthritis">Psoriatic Arthritis</option>
+                        <option value="Gout">Gout</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Known Allergies</label>
+                    <input type="text" id="reg-allergies" placeholder="e.g. Sulfa, NSAIDs or 'None'" value="None">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeRegisterModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Patient</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const defaultPatients = [
+            {
+                id: "RHEUM-1001",
+                name: "Sarah Jenkins",
+                age: 42,
+                gender: "Female",
+                diagnosis: "Rheumatoid Arthritis",
+                allergies: "Sulfa drugs",
+                medications: [
+                    { name: "Methotrexate", dose: "15mg", freq: "Weekly" },
+                    { name: "Folic Acid", dose: "5mg", freq: "Weekly (+24h)" },
+                    { name: "HCQ", dose: "200mg", freq: "Daily" }
+                ],
+                visits: [
+                    {
+                        date: "2026-06-10",
+                        complaints: "Morning stiffness ~45 mins, hand swelling.",
+                        tjc: 6, sjc: 4, esr: 32, crp: 1.4, pga: 4, ega: 3,
+                        scores: { das28: "4.12", cdai: "17.0", sdai: "18.4" },
+                        assessment: "Moderate disease activity. Escalating MTX dose.",
+                        rx: [
+                            { name: "Tab. Methotrexate", dose: "15mg", freq: "Once Weekly", duration: "3 Months" },
+                            { name: "Tab. Folic Acid", dose: "5mg", freq: "Weekly", duration: "3 Months" },
+                            { name: "Tab. Hydroxychloroquine", dose: "200mg", freq: "Once Daily", duration: "3 Months" }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        function getPatients() {
+            const data = localStorage.getItem('rheum_patients_offline_v3');
+            return data ? JSON.parse(data) : defaultPatients;
+        }
+
+        function savePatients(data) {
+            localStorage.setItem('rheum_patients_offline_v3', JSON.stringify(data));
+        }
+
+        let currentTab = 'dashboard';
+        let selectedPatientId = null;
+        let activeConsultation = null;
+
+        const jointsList = [
+            "L Shoulder", "R Shoulder", "L Elbow", "R Elbow",
+            "L Wrist", "R Wrist", "L MCP1-5", "R MCP1-5",
+            "L PIP1-5", "R PIP1-5", "L Knee", "R Knee"
+        ];
+
+        function render() {
+            const container = document.getElementById('app-container');
+            const patients = getPatients();
+
+            if (currentTab === 'dashboard') {
+                container.innerHTML = renderDashboard(patients);
+            } else if (currentTab === 'patients') {
+                container.innerHTML = renderPatientDirectory(patients);
+            } else if (currentTab === 'profile') {
+                const p = patients.find(x => x.id === selectedPatientId);
+                container.innerHTML = p ? renderPatientProfile(p) : '<div>Patient not found</div>';
+            } else if (currentTab === 'consultation') {
+                const p = patients.find(x => x.id === selectedPatientId);
+                container.innerHTML = p ? renderConsultationForm(p) : '<div>Patient not found</div>';
+            }
+        }
+
+        function switchTab(tab, patientId = null) {
+            currentTab = tab;
+            if (patientId) selectedPatientId = patientId;
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(tab)) btn.classList.add('active');
+            });
+
+            render();
+        }
+
+        function renderDashboard(patients) {
+            return `
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="grid-3">
+                    <div class="card stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div>
+                            <div class="stat-val">${patients.length}</div>
+                            <div class="stat-label">Registered Patients</div>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon" style="background:#e0f2f1; color:#00796b;">📝</div>
+                        <div>
+                            <div class="stat-val">${patients.reduce((acc, p) => acc + (p.visits ? p.visits.length : 0), 0)}</div>
+                            <div class="stat-label">Consultations Completed</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Recent OPD Patients</div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Patient ID</th>
+                                    <th>Name</th>
+                                    <th>Diagnosis</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${patients.map(p => `
+                                    <tr>
+                                        <td><strong>${p.id}</strong></td>
+                                        <td>${p.name}</td>
+                                        <td><span class="badge badge-teal">${p.diagnosis}</span></td>
+                                        <td>
+                                            <button class="btn btn-secondary" onclick="switchTab('profile', '${p.id}')">View Profile</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function renderPatientDirectory(patients) {
+            return `
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                    <input type="text" id="patient-search" placeholder="Search patient..." onkeyup="filterPatients()" style="padding: 8px 12px; border-radius: var(--radius); border: 1px solid var(--border); width: 300px;">
+                    <button class="btn btn-primary" onclick="openRegisterModal()">➕ Register Patient</button>
+                </div>
+                <div class="table-container">
+                    <table id="patients-table">
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>Name</th>
+                                <th>Age/Sex</th>
+                                <th>Diagnosis</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${patients.map(p => `
+                                <tr>
+                                    <td><strong>${p.id}</strong></td>
+                                    <td><strong>${p.name}</strong></td>
+                                    <td>${p.age} / ${p.gender}</td>
+                                    <td><span class="badge badge-teal">${p.diagnosis}</span></td>
+                                    <td>
+                                        <button class="btn btn-primary" onclick="switchTab('profile', '${p.id}')">📂 Profile</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            `;
+        }
+
+        function renderPatientProfile(patient) {
+            return `
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h2>${patient.name} <span style="font-size: 1rem; color: var(--text-muted);">(${patient.id})</span></h2>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
+                            ${patient.age} Yrs | ${patient.gender} | Diagnosis: <strong>${patient.diagnosis}</strong>
+                        </p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" onclick="startConsultation('${patient.id}')">🩺 Start Consultation</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Clinical Visits & Prescriptions</div>
+                    ${patient.visits && patient.visits.length > 0 ? `
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            ${patient.visits.map((v, vIdx) => `
+                                <div style="padding: 14px; border: 1px solid var(--border); border-radius: var(--radius); background: white;">
+                                    <div style="display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 6px;">
+                                        <span>Consult Date: ${v.date}</span>
+                                        <button class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem;" onclick="printPrescription('${patient.id}', ${vIdx})">
+                                            🖨️ Print Prescription
+                                        </button>
+                                    </div>
+                                    <p style="font-size: 0.85rem;"><strong>Notes:</strong> ${v.complaints}</p>
+                                    <p style="font-size: 0.85rem; margin-top: 4px;"><strong>Advice:</strong> ${v.assessment}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<p style="color: var(--text-muted);">No visits recorded.</p>'}
+                </div>
+            </div>
+            `;
+        }
+
+        function renderConsultationForm(patient) {
+            if (!activeConsultation) {
+                activeConsultation = {
+                    patientId: patient.id,
+                    tjc: 0,
+                    sjc: 0,
+                    jointStates: {},
+                    rx: []
+                };
+            }
+
+            const isRA = patient.diagnosis === "Rheumatoid Arthritis" || patient.diagnosis === "Psoriatic Arthritis";
+            const isSLE = patient.diagnosis === "Systemic Lupus Erythematosus";
+            const isAS = patient.diagnosis === "Ankylosing Spondylitis";
+
+            return `
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h3>Consultation: ${patient.name}</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">${patient.diagnosis} | Age: ${patient.age}</p>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" onclick="switchTab('profile', '${patient.id}')">Cancel</button>
+                        <button class="btn btn-primary" onclick="saveConsultation()">💾 Save Visit</button>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        ${isRA || (!isSLE && !isAS) ? `
+                            <div class="card-title">28-Joint Exam (RA / PsA)</div>
+                            <div class="joint-container">
+                                <div class="joint-grid">
+                                    ${jointsList.map((j, idx) => {
+                                        const state = activeConsultation.jointStates[idx] || 'normal';
+                                        return `<button class="joint-btn ${state}" onclick="toggleJoint(${idx})">${j}<br><strong>${state.toUpperCase()}</strong></button>`;
+                                    }).join('')}
+                                </div>
+                            </div>
+
+                            <div class="card-title" style="margin-top: 20px;">Disease Scoring (DAS28 / CDAI / SDAI)</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="form-group"><label>ESR (mm/hr)</label><input type="number" id="consult-esr" value="28" oninput="calculateScores()"></div>
+                                <div class="form-group"><label>CRP (mg/dL)</label><input type="number" step="0.1" id="consult-crp" value="1.2" oninput="calculateScores()"></div>
+                                <div class="form-group"><label>Pt Global (0-10)</label><input type="number" min="0" max="10" id="consult-pga" value="4" oninput="calculateScores()"></div>
+                                <div class="form-group"><label>Doc Global (0-10)</label><input type="number" min="0" max="10" id="consult-ega" value="2" oninput="calculateScores()"></div>
+                            </div>
+
+                            <div class="score-card-grid">
+                                <div class="score-box"><div class="score-lbl">DAS28-ESR</div><div class="score-val" id="das28-val">0.0</div></div>
+                                <div class="score-box"><div class="score-lbl">CDAI</div><div class="score-val" id="cdai-val">0.0</div></div>
+                                <div class="score-box"><div class="score-lbl">SDAI</div><div class="score-val" id="sdai-val">0.0</div></div>
+                            </div>
+                        ` : ''}
+
+                        ${isSLE ? `
+                            <div class="card-title">SLEDAI-2K Score Checklist</div>
+                            <div class="sledai-grid" onchange="calculateScores()">
+                                <label class="sledai-item"><input type="checkbox" class="sledai-ck" value="8"> Arthritis (+8)</label>
+                                <label class="sledai-item"><input type="checkbox" class="sledai-ck" value="6"> Proteinuria (+6)</label>
+                                <label class="sledai-item"><input type="checkbox" class="sledai-ck" value="4"> Vasculitis (+4)</label>
+                                <label class="sledai-item"><input type="checkbox" class="sledai-ck" value="2"> Malar Rash (+2)</label>
+                                <label class="sledai-item"><input type="checkbox" class="sledai-ck" value="2"> Alopecia (+2)</label>
+                                <label class="sledai-item"><input type="checkbox" class="sledai-ck" value="2"> Low Complement (+2)</label>
+                            </div>
+                            <div style="background: var(--primary-light); padding: 12px; border-radius: var(--radius); text-align: center; margin-top: 16px;">
+                                <span>SLEDAI Score: </span><strong id="sledai-val" style="font-size:1.4rem;">0</strong>
+                            </div>
+                        ` : ''}
+
+                        ${isAS ? `
+                            <div class="card-title">BASDAI Score Engine (0-10 Scale)</div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;" oninput="calculateScores()">
+                                <div><label>Fatigue Score: <strong id="bas1-v">3</strong></label><input type="range" min="0" max="10" value="3" id="bas1" oninput="document.getElementById('bas1-v').innerText=this.value"></div>
+                                <div><label>Spinal Pain: <strong id="bas2-v">4</strong></label><input type="range" min="0" max="10" value="4" id="bas2" oninput="document.getElementById('bas2-v').innerText=this.value"></div>
+                                <div><label>Stiffness: <strong id="bas3-v">4</strong></label><input type="range" min="0" max="10" value="4" id="bas3" oninput="document.getElementById('bas3-v').innerText=this.value"></div>
+                            </div>
+                            <div style="background: var(--primary-light); padding: 12px; border-radius: var(--radius); text-align: center; margin-top: 16px;">
+                                <span>BASDAI Score: </span><strong id="basdai-val" style="font-size:1.4rem;">0.0</strong>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Prescription Builder</div>
+                        <div class="form-group">
+                            <label>Clinical Summary / Key Complaints</label>
+                            <textarea id="consult-complaints" rows="2" placeholder="e.g. Joint pain, morning stiffness..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Clinical Advice & Instructions</label>
+                            <textarea id="consult-assessment" rows="2" placeholder="e.g. Continue exercises, review after 1 month..."></textarea>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 6px; margin-bottom: 8px;">
+                            <input type="text" id="rx-name" placeholder="Medication">
+                            <input type="text" id="rx-dose" placeholder="Dose">
+                            <input type="text" id="rx-freq" placeholder="Freq">
+                            <input type="text" id="rx-dur" placeholder="Duration">
+                            <button class="btn btn-primary" onclick="addRxItem()">Add</button>
+                        </div>
+                        <ul id="rx-list" style="list-style: none; display: flex; flex-direction: column; gap: 4px;"></ul>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function openRegisterModal() { document.getElementById('register-modal').classList.add('active'); }
+        function closeRegisterModal() { document.getElementById('register-modal').classList.remove('active'); }
+
+        function handleRegisterPatient(e) {
+            e.preventDefault();
+            const patients = getPatients();
+            const newPatient = {
+                id: `RHEUM-${1001 + patients.length}`,
+                name: document.getElementById('reg-name').value,
+                age: document.getElementById('reg-age').value,
+                gender: document.getElementById('reg-gender').value,
+                diagnosis: document.getElementById('reg-diagnosis').value,
+                allergies: document.getElementById('reg-allergies').value,
+                medications: [],
+                visits: []
+            };
+
+            patients.push(newPatient);
+            savePatients(patients);
+            closeRegisterModal();
+            switchTab('patients');
+        }
+
+        function toggleJoint(idx) {
+            if (!activeConsultation) return;
+            const current = activeConsultation.jointStates[idx] || 'normal';
+            const nextMap = { 'normal': 'tender', 'tender': 'swollen', 'swollen': 'both', 'both': 'normal' };
+            activeConsultation.jointStates[idx] = nextMap[current];
+
+            let tjc = 0, sjc = 0;
+            Object.values(activeConsultation.jointStates).forEach(st => {
+                if (st === 'tender' || st === 'both') tjc++;
+                if (st === 'swollen' || st === 'both') sjc++;
+            });
+
+            activeConsultation.tjc = tjc;
+            activeConsultation.sjc = sjc;
+            render();
+            calculateScores();
+        }
+
+        function calculateScores() {
+            const tjc = activeConsultation ? activeConsultation.tjc : 0;
+            const sjc = activeConsultation ? activeConsultation.sjc : 0;
+
+            const esrElem = document.getElementById('consult-esr');
+            if (esrElem) {
+                const esr = parseFloat(esrElem.value) || 10;
+                const crp = parseFloat(document.getElementById('consult-crp').value) || 0.5;
+                const pga = parseFloat(document.getElementById('consult-pga').value) || 0;
+                const ega = parseFloat(document.getElementById('consult-ega').value) || 0;
+
+                const das28 = (0.56 * Math.sqrt(tjc) + 0.28 * Math.sqrt(sjc) + 0.70 * Math.log(esr) + 0.014 * (pga * 10)).toFixed(2);
+                const cdai = (tjc + sjc + pga + ega).toFixed(1);
+                const sdai = (parseFloat(cdai) + crp).toFixed(1);
+
+                document.getElementById('das28-val').innerText = das28;
+                document.getElementById('cdai-val').innerText = cdai;
+                document.getElementById('sdai-val').innerText = sdai;
+            }
+
+            const sledaiCks = document.querySelectorAll('.sledai-ck');
+            if (sledaiCks.length > 0) {
+                let score = 0;
+                sledaiCks.forEach(ck => { if (ck.checked) score += parseInt(ck.value); });
+                document.getElementById('sledai-val').innerText = score;
+            }
+
+            const bas1 = document.getElementById('bas1');
+            if (bas1) {
+                const q1 = parseFloat(document.getElementById('bas1').value);
+                const q2 = parseFloat(document.getElementById('bas2').value);
+                const q3 = parseFloat(document.getElementById('bas3').value);
+                const basdai = ((q1 + q2 + q3) / 3).toFixed(1);
+                document.getElementById('basdai-val').innerText = basdai;
+            }
+        }
+
+        function addRxItem() {
+            const name = document.getElementById('rx-name').value;
+            const dose = document.getElementById('rx-dose').value;
+            const freq = document.getElementById('rx-freq').value;
+            const duration = document.getElementById('rx-dur').value || '1 Month';
+
+            if (!name) return;
+
+            activeConsultation.rx.push({ name, dose, freq, duration });
+            document.getElementById('rx-name').value = '';
+            document.getElementById('rx-dose').value = '';
+            document.getElementById('rx-freq').value = '';
+            document.getElementById('rx-dur').value = '';
+
+            const listElem = document.getElementById('rx-list');
+            listElem.innerHTML = activeConsultation.rx.map(item => `
+                <li style="font-size:0.85rem; padding:6px; background:#f1f5f9; border-radius:4px; display:flex; justify-content:space-between;">
+                    <strong>${item.name} ${item.dose}</strong>
+                    <span>${item.freq} - ${item.duration}</span>
+                </li>
+            `).join('');
+        }
+
+        function saveConsultation() {
+            const patients = getPatients();
+            const pIdx = patients.findIndex(x => x.id === selectedPatientId);
+            if (pIdx === -1) return;
+
+            const visitRecord = {
+                date: new Date().toISOString().split('T')[0],
+                complaints: document.getElementById('consult-complaints').value,
+                assessment: document.getElementById('consult-assessment').value,
+                rx: activeConsultation.rx
+            };
+
+            if (!patients[pIdx].visits) patients[pIdx].visits = [];
+            patients[pIdx].visits.unshift(visitRecord);
+
+            savePatients(patients);
+            activeConsultation = null;
+            switchTab('profile', selectedPatientId);
+        }
+
+        function startConsultation(patientId) {
+            activeConsultation = null;
+            switchTab('consultation', patientId);
+            setTimeout(calculateScores, 100);
+        }
+
+        function filterPatients() {
+            const query = document.getElementById('patient-search').value.toLowerCase();
+            const rows = document.querySelectorAll('#patients-table tbody tr');
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+            });
+        }
+
+        // --- PRINT ENGINE WITH PROPORTIONAL LOGO SIZE ---
+        function printPrescription(patientId, visitIndex) {
+            const patients = getPatients();
+            const patient = patients.find(p => p.id === patientId);
+            if (!patient || !patient.visits[visitIndex]) return;
+
+            const visit = patient.visits[visitIndex];
+            const printArea = document.getElementById('printable-prescription');
+
+            printArea.innerHTML = `
+                <div>
+                    <!-- Header with Resized/Proportional Logo & Title -->
+                    <div class="rx-header-box">
+                        <svg class="rx-header-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 28,30 C 42,27 48,22 50,18 C 52,22 58,27 72,30 C 73,50 71,68 59,80 C 53,85 51,87 50,88 C 49,87 47,85 41,80 C 29,68 27,50 28,30 Z" fill="#009688"/>
+                            <path d="M 39,36 H 43 V 32 H 47 V 36 H 51 V 40 H 47 V 44 H 43 V 40 H 39 Z" fill="#FFFFFF"/>
+                            <path d="M 45,15 C 47,28 47,38 52,43 C 55,46 58,45 58,51 C 58,56 53,58 51,62 C 49,66 50,78 52,85 C 49,78 47,68 48,62 C 49,58 53,56 53,51 C 53,47 50,47 47,42 C 43,36 43,26 43,15 Z" fill="#FFFFFF"/>
+                            <path d="M 51,62 C 53,65 52,78 58,85 C 56,78 54,66 52,62 Z" fill="#00796b"/>
+                        </svg>
+                        <div style="flex-grow:1;">
+                            <div class="rx-title-main">JHAJI'S RHEUMATOLOGICAL DISORDERS AND REHABILITATION CENTRE</div>
+                            <div class="rx-doctor-tag">DR AMAR KUMAR JHA, MBBS, MD | REGD NO-24473</div>
+                        </div>
+                    </div>
+
+                    <!-- Patient Info Bar -->
+                    <div class="rx-patient-bar">
+                        <div>Patient Name <span class="rx-line-val">${patient.name}</span></div>
+                        <div>Age <span class="rx-line-val">${patient.age} Yrs</span></div>
+                        <div>Sex <span class="rx-line-val">${patient.gender}</span></div>
+                        <div>Date <span class="rx-line-val">${visit.date}</span></div>
+                    </div>
+
+                    <!-- Prescription Body -->
+                    <div class="rx-body">
+                        <div class="rx-symbol-big">Rx</div>
+
+                        <table class="rx-table-print">
+                            <thead>
+                                <tr>
+                                    <th>Rx / Medicine Name</th>
+                                    <th>Dosage</th>
+                                    <th>Frequency</th>
+                                    <th>Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${visit.rx && visit.rx.length > 0 ? visit.rx.map(m => `
+                                    <tr>
+                                        <td><strong>${m.name}</strong></td>
+                                        <td>${m.dose || '-'}</td>
+                                        <td>${m.freq || '-'}</td>
+                                        <td>${m.duration || '-'}</td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="4">No active prescriptions entered for this visit.</td></tr>'}
+                            </tbody>
+                        </table>
+
+                        ${visit.assessment ? `
+                            <div style="margin-top: 30px; font-family: Arial, sans-serif; font-size: 0.95rem;">
+                                <strong>Advice / Clinical Instructions:</strong>
+                                <p style="margin-top: 4px; line-height: 1.4;">${visit.assessment}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="rx-footer-box">
+                    Near RB memorial hospital, Benta, Laheriasarai, Darbhanga-846001<br>
+                    Email - jha.amar7@gmail.com &nbsp;&nbsp;&nbsp; Phone - 7008532671
+                </div>
+            `;
+
+            window.print();
+        }
+
+        window.onload = () => { render(); };
+    </script>
+</body>
+</html>
